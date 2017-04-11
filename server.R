@@ -5,15 +5,19 @@
 ###########################################
 
 library(shiny)
+library(plotly)
 library(caret)
 library(plyr)
 library(mboost)
 library(ipred)
 library(e1071)
 library(randomForest)
+library(klaR)
 library(evtree)
 library(mgcv)
 library(ElemStatLearn)
+library(ISLR)
+library(AppliedPredictiveModeling)
 library(MASS)
 
 shinyServer(function(input, output) {
@@ -70,6 +74,30 @@ shinyServer(function(input, output) {
                         url <- "https://statweb.stanford.edu/~tibs/ElemStatLearn/datasets/prostate.info.txt"
                 if (input$dataset == "galaxy") 
                         url <- "https://statweb.stanford.edu/~tibs/ElemStatLearn/datasets/galaxy.info.txt"
+                if (input$dataset == "Auto") 
+                        url <- "https://cran.r-project.org/web/packages/ISLR/ISLR.pdf#page=2"
+                if (input$dataset == "Caravan") 
+                        url <- "https://cran.r-project.org/web/packages/ISLR/ISLR.pdf#page=3"
+                if (input$dataset == "Carseats") 
+                        url <- "https://cran.r-project.org/web/packages/ISLR/ISLR.pdf#page=4"
+                if (input$dataset == "College") 
+                        url <- "https://cran.r-project.org/web/packages/ISLR/ISLR.pdf#page=5"
+                if (input$dataset == "Default") 
+                        url <- "https://cran.r-project.org/web/packages/ISLR/ISLR.pdf#page=6"
+                if (input$dataset == "Hitters") 
+                        url <- "https://cran.r-project.org/web/packages/ISLR/ISLR.pdf#page=7"
+                if (input$dataset == "OJ") 
+                        url <- "https://cran.r-project.org/web/packages/ISLR/ISLR.pdf#page=9"
+                if (input$dataset == "Wage") 
+                        url <- "https://cran.r-project.org/web/packages/ISLR/ISLR.pdf#page=11"
+                if (input$dataset == "abalone") 
+                        url <- "https://cran.r-project.org/web/packages/AppliedPredictiveModeling/AppliedPredictiveModeling.pdf#page=2"
+                if (input$dataset == "ChemicalManufacturingProcess") 
+                        url <- "https://cran.r-project.org/web/packages/AppliedPredictiveModeling/AppliedPredictiveModeling.pdf#page=5"
+                if (input$dataset == "concrete") 
+                        url <- "https://cran.r-project.org/web/packages/AppliedPredictiveModeling/AppliedPredictiveModeling.pdf#page=5"
+                if (input$dataset == "schedulingData") 
+                        url <- "https://cran.r-project.org/web/packages/AppliedPredictiveModeling/AppliedPredictiveModeling.pdf#page=14"
                 url
                 })
         
@@ -94,7 +122,7 @@ shinyServer(function(input, output) {
                 choices1 <- names(dataset())
                 index <- which(choices1 == outcome)
                 choices2 <- choices1[- index]
-                selectInput("predictors", "Choose the predictors (default = all) :", choices = choices2, multiple = TRUE, selected = names(dataset()))
+                selectInput("predictors", "Choose the predictors :", choices = choices2, multiple = TRUE, selected = names(dataset()))
         })
         
         output$selecX1 <- renderUI({
@@ -111,56 +139,83 @@ shinyServer(function(input, output) {
                         return()
                 dataset <- input$dataset
                 if (dataset == "spam") 
-                        data(spam, package="kernlab")
+                        data(spam, package = "kernlab")
+                if (dataset == "abalone") 
+                        data(abalone, package="AppliedPredictiveModeling")
+                if (dataset == "ChemicalManufacturingProcess") 
+                        data(ChemicalManufacturingProcess, package = "AppliedPredictiveModeling")
+                if (dataset == "concrete") 
+                        data(concrete, package = "AppliedPredictiveModeling")
+                if (dataset == "schedulingData") 
+                        data(schedulingData, package = "AppliedPredictiveModeling")
                 get(dataset)
         })
         
         
-        trainingData <- reactive({
-                set.seed(1234)
-                dataset <- dataset()
-                y <- input$outcome
-                split <- input$split / 100
-                inTrain <- createDataPartition(y = dataset[[y]], p = split, list = FALSE)
-                dataset[inTrain, ]
-        })
-        
-        testingData <- reactive({
-                set.seed(1234)
+        dataPartitioned <- reactive({
+
+                if(input$setSeed){
+                        set.seed(1234)
+                }
+                
                 dataset <- dataset()
                 if(is.null(dataset))
-                        return()
+                        return()                
+                
+                ## Filtering out rows with missing values
+                complete <- complete.cases(dataset)
+                dataset <- dataset[complete,]
+                
                 y <- input$outcome
                 if(is.null(input$outcome))
                         return()
+                
                 split <- input$split / 100
                 inTrain <- createDataPartition(y = dataset[[y]], p = split, list = FALSE)
-                dataset[-inTrain, ]
+                output <- list()
+                output$train <- dataset[inTrain, ]
+                output$test <- dataset[-inTrain, ]
+                output
         })
         
         model1 <- reactive({
-                set.seed(1234)
+
+                if(input$setSeed){
+                        set.seed(1234)
+                }
+                
                 if (input$method == 1) method <- "lm"
                 if (input$method == 2) method <- "glmboost"
                 if (input$method == 3) method <- "gam"                
                 if (input$method == 4) method <- "treebag"
                 if (input$method == 5) method <- "rf"
                 if (input$method == 6) method <- "knn"
-                if (input$method == 7) method <- "svmLinear"
-                if (input$method == 8) method <- "evtree"
+                if (input$method == 7) method <- "nb"
+                if (input$method == 8) method <- "svmLinear"
+                if (input$method == 9) method <- "evtree"
                 x <- input$predictors
                 if(is.null(input$predictors))
                         return()
                 y <- input$outcome
+                dataPartitioned <- dataPartitioned()
+                training <- dataPartitioned$train
+                
                 k <- input$k
-                fitControl <- trainControl(method = "cv", number = k)
-                model1 <- train(reformulate(x, response = y), method = method, 
-                                data = trainingData(), trControl = fitControl, na.action = na.fail)
+                if (k == 1) {
+                        model1 <- train(reformulate(x, response = y), method = method, 
+                                        data = training, na.action = na.fail)
+                } else {
+                        fitControl <- trainControl(method = "cv", number = k)
+                        model1 <- train(reformulate(x, response = y), method = method, 
+                                        data = training, trControl = fitControl, na.action = na.fail)
+                }
+                
                 model1
         })
         
         predic <- reactive({
-                testing <- testingData()
+                dataPartitioned <- dataPartitioned()
+                testing <- dataPartitioned$test
                 if(is.null(testing))
                         return()
                 model <- model1()
@@ -175,7 +230,8 @@ shinyServer(function(input, output) {
         })
         
         output$accuracy <- renderPrint({
-                testing <- testingData()
+                dataPartitioned <- dataPartitioned()
+                testing <- dataPartitioned$test
                 if(is.null(testing))
                         return()
                 y <- input$outcome
@@ -189,33 +245,30 @@ shinyServer(function(input, output) {
         
         output$plot1 <- renderPlotly({
                 model <- model1()
-                testing <- testingData()
+                dataPartitioned <- dataPartitioned()
+                test <- dataPartitioned$test
                 x1 <- input$x1
                 y <- input$outcome
                 
                 if(is.null(model))
                         return()
                 
-                        datapred <- data.frame(x = testing[[x1]], y = predic(), label = "predicted values")
-                        names(datapred) <- c(x1, y, "label")
+                        pred <- data.frame(x = test[[x1]], y = predic(), label = "predicted values")
+                        names(pred) <- c(x1, y, "label")
                         
-                        testing <- data.frame(testing, label = "test set values")
+                        test <- data.frame(test, label = "test set values")
                         
-                        g <- ggplot(data = testing, aes(x = testing[[x1]], y = testing[[y]])) +  
-                                geom_point(aes(x = testing[[x1]], y = testing[[y]], colour = testing$label, shape = testing$label), 
-                                           size = 2, alpha = 0.6)
+                        g <- ggplot(data = test, aes(x = test[[x1]], y = test[[y]])) +  
+                                geom_point(aes(colour = test$label), size = 2, alpha = 0.6)
                         
-                        if(input$showPred){
-                                g <- g + geom_point(aes(x = datapred[1], y = datapred[2], colour = datapred$label, shape = datapred$label), 
-                                                    size = 2, alpha = 0.4)
-                        }
+                        g <- g + geom_point(aes(x = pred[1], y = pred[2], colour = pred$label), 
+                                                    size = 2, alpha = 0.4, inherit.aes = FALSE)
                         
-                        g <- g + ggtitle(paste(input$dataset, "data (test set)"))
-                        g <- g + theme(plot.title = element_text(hjust=0.5, size = 16), 
-                                       axis.title = element_text(size = 12)) + 
-                                labs(x = x1, y = y) + scale_color_manual(values=c("#468cc8", "red"), name = "Legend") + 
-                                scale_shape_manual(values=c(19, 16), name = "Legend")
-                        g
+                        g <- g + theme(axis.title = element_text(size = 10)) + 
+                                labs(x = x1, y = y) + scale_color_manual(values=c("#468cc8", "red"), 
+                                                                         name = "Legend (show/hide)")
+                        
+                        ggplotly(g, tooltip = c("x","y"))
         })     
         
 })
