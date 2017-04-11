@@ -187,7 +187,7 @@ shinyServer(function(input, output) {
                 postResample(pred, testing[[y]])[1]
         })
         
-        output$plot1 <- renderPlot({
+        output$plot1 <- renderPlotly({
                 model <- model1()
                 testing <- testingData()
                 x1 <- input$x1
@@ -203,14 +203,14 @@ shinyServer(function(input, output) {
                         
                         g <- ggplot(data = testing, aes(x = testing[[x1]], y = testing[[y]])) +  
                                 geom_point(aes(x = testing[[x1]], y = testing[[y]], colour = testing$label, shape = testing$label), 
-                                           size = 5, alpha = 0.7)
+                                           size = 2, alpha = 0.6)
                         
                         if(input$showPred){
                                 g <- g + geom_point(aes(x = datapred[1], y = datapred[2], colour = datapred$label, shape = datapred$label), 
-                                                    size = 4, alpha = 0.4)
+                                                    size = 2, alpha = 0.4)
                         }
                         
-                        g <- g + ggtitle(paste("Dataset =", input$dataset))
+                        g <- g + ggtitle(paste(input$dataset, "data (test set)"))
                         g <- g + theme(plot.title = element_text(hjust=0.5, size = 16), 
                                        axis.title = element_text(size = 12)) + 
                                 labs(x = x1, y = y) + scale_color_manual(values=c("#468cc8", "red"), name = "Legend") + 

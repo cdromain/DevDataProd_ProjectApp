@@ -6,6 +6,7 @@
 
 library(shiny)
 library(shinythemes)
+library(plotly)
 
 shinyUI(fluidPage(theme = shinytheme("simplex"),
         # theme = shinytheme("united"),
@@ -22,7 +23,7 @@ shinyUI(fluidPage(theme = shinytheme("simplex"),
                                                                   "OrchardSprays", "InsectSprays",
                                                                   "PlantGrowth", "pressure", "sleep",
                                                                   "swiss", "spam", "ozone", "prostate",
-                                                                  "galaxy"), selected = "trees")
+                                                                  "galaxy"), selected = "faithful")
                                               ),
                                        column(1, uiOutput("helpButton"))),
                                        #column(1, actionButton("button1", "?"))),
@@ -46,7 +47,8 @@ shinyUI(fluidPage(theme = shinytheme("simplex"),
                        verbatimTextOutput("results"),
                        h6("Prediction results on the test set :"),
                        verbatimTextOutput("accuracy"),
-                       plotOutput("plot1", height = "350px", width = "75%")
+                       plotlyOutput("plot1", height = "350px", width = "75%")
+                       # plotOutput("plot1", height = "350px", width = "75%")
                        # Masking error messages using CSS
                        ## source : https://groups.google.com/forum/#!topic/shiny-discuss/FyMGa2R_Mgs
                        #tags$style(type="text/css",
