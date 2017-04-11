@@ -1,11 +1,8 @@
-#
-# This is the user-interface definition of a Shiny web application. You can
-# run the application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-# 
-#    http://shiny.rstudio.com/
-#
+# Developing Data Products course project
+# "Prediction Playground" Shiny application
+# User-interface definition
+# Romain Faure - April 2017
+###########################################
 
 library(shiny)
 library(shinythemes)
@@ -32,7 +29,7 @@ shinyUI(fluidPage(theme = shinytheme("simplex"),
                                uiOutput("selecOutcome"),
                                uiOutput("selecPredictors"),
                                sliderInput("split", "Percentage of data in training set :", 1, 90, value = 80),
-                               sliderInput("k", "k value for k-fold CV :", 2, 20, value = 5),
+                               sliderInput("k", "k-fold cross validation k value :", 2, 20, value = 5),
                                selectInput("method", label = "Model choice :", 
                                            list("Linear model" = 1, 
                                                 "Boosted Generalized Linear Model" = 2, "Generalized Additive Model using Splines" = 3, 
@@ -41,7 +38,7 @@ shinyUI(fluidPage(theme = shinytheme("simplex"),
                                                 "S.V.M. with linear kernel" = 7, "Tree Models from Genetic Algorithms" = 8), selected = 1)
                        ),
                        wellPanel(
-                               tags$h4(paste0("Plot"), icon("bar-chart-o")),
+                               tags$h4(icon("bar-chart-o"), paste0("Plot")),
                                uiOutput("selecX1"),
                                checkboxInput("showPred", "Show/Hide predictions", value = TRUE)
                        )),

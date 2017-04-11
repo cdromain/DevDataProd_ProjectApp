@@ -1,11 +1,8 @@
-#
-# This is the server logic of a Shiny web application. You can run the 
-# application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-# 
-#    http://shiny.rstudio.com/
-#
+# Developing Data Products course project
+# "Prediction Playground" Shiny application
+# Server logic
+# Romain Faure - April 2017
+###########################################
 
 library(shiny)
 library(caret)
@@ -18,7 +15,6 @@ library(evtree)
 library(mgcv)
 library(ElemStatLearn)
 library(MASS)
-
 
 shinyServer(function(input, output) {
         
@@ -200,10 +196,10 @@ shinyServer(function(input, output) {
                 if(is.null(model))
                         return()
                 
-                        datapred <- data.frame(x = testing[[x1]], y = predic(), label = "predictions")
+                        datapred <- data.frame(x = testing[[x1]], y = predic(), label = "predicted values")
                         names(datapred) <- c(x1, y, "label")
                         
-                        testing <- data.frame(testing, label = "original data")
+                        testing <- data.frame(testing, label = "test set values")
                         
                         g <- ggplot(data = testing, aes(x = testing[[x1]], y = testing[[y]])) +  
                                 geom_point(aes(x = testing[[x1]], y = testing[[y]], colour = testing$label, shape = testing$label), 
