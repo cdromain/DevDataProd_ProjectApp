@@ -22,15 +22,6 @@ library(MASS)
 
 shinyServer(function(input, output) {
         
-        #output$variables <- reactive({
-        #         names(input$dataset)
-        # })
-        
-        # Return the requested dataset
-        #datasetInput <- reactive({
-        #input$dataset
-        #})
-        
         getUrl <- reactive({
                 if (input$dataset == "iris") 
                         url <- "https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/iris.html"
@@ -99,17 +90,11 @@ shinyServer(function(input, output) {
                 if (input$dataset == "schedulingData") 
                         url <- "https://cran.r-project.org/web/packages/AppliedPredictiveModeling/AppliedPredictiveModeling.pdf#page=14"
                 url
-                })
-        
-        #observeEvent(input$button1, {
-        #        dataset <- input$dataset
-        #        url <- getUrl()
-        #        browseURL(url, browser = getOption("browser"), encodeIfNeeded = TRUE)
-        #})
+        })
         
         output$helpButton <- renderUI({
                 tags$a(class="btn btn-default", target="_blank", href=getUrl(), "?")
-                })
+        })
         
         output$selecOutcome <- renderUI({
                 dataset <- input$dataset
@@ -153,7 +138,7 @@ shinyServer(function(input, output) {
         
         
         dataPartitioned <- reactive({
-
+                
                 if(input$setSeed){
                         set.seed(1234)
                 }
@@ -179,7 +164,7 @@ shinyServer(function(input, output) {
         })
         
         model1 <- reactive({
-
+                
                 if(input$setSeed){
                         set.seed(1234)
                 }
@@ -244,6 +229,7 @@ shinyServer(function(input, output) {
         })
         
         output$plot1 <- renderPlotly({
+                showDoc <- input$showDoc
                 model <- model1()
                 dataPartitioned <- dataPartitioned()
                 test <- dataPartitioned$test
@@ -253,22 +239,74 @@ shinyServer(function(input, output) {
                 if(is.null(model))
                         return()
                 
-                        pred <- data.frame(x = test[[x1]], y = predic(), label = "predicted values")
-                        names(pred) <- c(x1, y, "label")
-                        
-                        test <- data.frame(test, label = "test set values")
-                        
-                        g <- ggplot(data = test, aes(x = test[[x1]], y = test[[y]])) +  
-                                geom_point(aes(colour = test$label), size = 2, alpha = 0.6)
-                        
-                        g <- g + geom_point(aes(x = pred[1], y = pred[2], colour = pred$label), 
-                                                    size = 2, alpha = 0.4, inherit.aes = FALSE)
-                        
-                        g <- g + theme(axis.title = element_text(size = 10)) + 
-                                labs(x = x1, y = y) + scale_color_manual(values=c("#468cc8", "red"), 
-                                                                         name = "Legend (show/hide)")
-                        
-                        ggplotly(g, tooltip = c("x","y"))
-        })     
+                pred <- data.frame(x = test[[x1]], y = predic(), label = "predicted values")
+                names(pred) <- c(x1, y, "label")
+                
+                test <- data.frame(test, label = "test set values")
+                
+                g <- ggplot(data = test, aes(x = test[[x1]], y = test[[y]])) +  
+                        geom_point(aes(colour = test$label), size = 2, alpha = 0.6)
+                
+                g <- g + geom_point(aes(x = pred[1], y = pred[2], colour = pred$label), 
+                                    size = 2, alpha = 0.4, inherit.aes = FALSE)
+                
+                g <- g + theme(axis.title = element_text(size = 10)) + 
+                        labs(x = x1, y = y) + scale_color_manual(values=c("#468cc8", "red"), 
+                                                                 name = "Legend (show/hide)")
+                
+                ggplotly(g, tooltip = c("x","y"))
+        })   
+        
+        
+        output$rightPanel <- renderUI({
+                if (input$showDoc) {
+                        fluidRow(
+                                column(8,
+                                       verbatimTextOutput("results"),
+                                       h6("Prediction results on the test set :"),
+                                       verbatimTextOutput("accuracy"),
+                                       plotlyOutput("plot1", height = "300px")
+                                ),
+                                column(4,
+                                       h4("Documentation"),
+                                       hr(),
+                                       h6("1. Select a data set"),
+                                       helpText("Click on the ? button to get more info",                                                        "about the selected data set."),
+                                       hr(),
+                                       h6("2. Choose the outcome variable"),
+                                       hr(),
+                                       h6("3. Choose the predictors variables"),
+                                       helpText("Default = all, except the outcome variable,", 
+                                                "(which is automatically removed from the list)."),
+                                       hr(), 
+                                       h6("4. Partition the data using the slider"),
+                                       helpText("This % gets assigned to the training set,", 
+                                                "while the remaining data goes to the test set."),
+                                       hr(),
+                                       h6("5. Choose k for k-fold cross-validation using the slider"),
+                                       helpText("Choose 1 to disable C.V."),
+                                       hr(), 
+                                       h6("6. Choose the prediction model"),
+                                       helpText("The chosen model will be trained and then used", 
+                                                "for prediction. (C) means classification only",
+                                                "and (R) regression only."),
+                                       hr(),
+                                       h6("7. Optionally set the seed to 1234"),
+                                       helpText("The seed concerns both data partitioning", 
+                                                "and model building for reproducibility purposes.")
+                                ))
+                } else {
+                        fluidRow(
+                                column(12,
+                                       verbatimTextOutput("results"),
+                                       h6("Prediction results on the test set :"),
+                                       verbatimTextOutput("accuracy"),
+                                       plotlyOutput("plot1", height = "300px")
+                                ))
+                }
+        })
+        
+        
+        
         
 })
