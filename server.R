@@ -1,8 +1,8 @@
-# Developing Data Products course project
-# "Prediction Playground" Shiny application
-# Server logic
-# Romain Faure - April 2017
-###########################################
+# Developing Data Products course project   #
+# "Prediction Playground" Shiny application #
+# Server logic                              #
+# Romain Faure - April 2017                 #
+#############################################
 
 library(shiny)
 library(plotly)
@@ -15,6 +15,7 @@ library(randomForest)
 library(klaR)
 library(evtree)
 library(mgcv)
+library(caTools)
 library(ElemStatLearn)
 library(ISLR)
 library(AppliedPredictiveModeling)
@@ -138,11 +139,6 @@ shinyServer(function(input, output) {
         
         
         dataPartitioned <- reactive({
-                
-                if(input$setSeed){
-                        set.seed(1234)
-                }
-                
                 dataset <- dataset()
                 if(is.null(dataset))
                         return()                
@@ -156,6 +152,11 @@ shinyServer(function(input, output) {
                         return()
                 
                 split <- input$split / 100
+                
+                if(input$setSeed){
+                        set.seed(1234)
+                }
+                
                 inTrain <- createDataPartition(y = dataset[[y]], p = split, list = FALSE)
                 output <- list()
                 output$train <- dataset[inTrain, ]
@@ -164,20 +165,18 @@ shinyServer(function(input, output) {
         })
         
         model1 <- reactive({
-                
-                if(input$setSeed){
-                        set.seed(1234)
-                }
-                
                 if (input$method == 1) method <- "lm"
                 if (input$method == 2) method <- "glmboost"
-                if (input$method == 3) method <- "gam"                
-                if (input$method == 4) method <- "treebag"
-                if (input$method == 5) method <- "rf"
-                if (input$method == 6) method <- "knn"
-                if (input$method == 7) method <- "nb"
-                if (input$method == 8) method <- "svmLinear"
-                if (input$method == 9) method <- "evtree"
+                if (input$method == 3) method <- "gam"
+                if (input$method == 4) method <- "LogitBoost"
+                if (input$method == 5) method <- "treebag"
+                if (input$method == 6) method <- "rf"
+                if (input$method == 7) method <- "knn"
+                if (input$method == 8) method <- "lda"
+                if (input$method == 9) method <- "nb"
+                if (input$method == 10) method <- "svmLinear"
+                if (input$method == 11) method <- "nnet"
+                if (input$method == 12) method <- "evtree"
                 x <- input$predictors
                 if(is.null(input$predictors))
                         return()
@@ -186,14 +185,25 @@ shinyServer(function(input, output) {
                 training <- dataPartitioned$train
                 
                 k <- input$k
+                
+                if(input$setSeed){
+                        set.seed(1234)
+                }
+                
+                withProgress(message = 'Building model...', value = 0, {
+                        incProgress(0.1)
                 if (k == 1) {
                         model1 <- train(reformulate(x, response = y), method = method, 
                                         data = training, na.action = na.fail)
+                        incProgress(0.1)
+                        setProgress(1)
                 } else {
                         fitControl <- trainControl(method = "cv", number = k)
                         model1 <- train(reformulate(x, response = y), method = method, 
                                         data = training, trControl = fitControl, na.action = na.fail)
-                }
+                        incProgress(0.1)
+                        setProgress(1)
+                }})
                 
                 model1
         })
@@ -215,6 +225,7 @@ shinyServer(function(input, output) {
         })
         
         output$accuracy <- renderPrint({
+                method <- input$method
                 dataPartitioned <- dataPartitioned()
                 testing <- dataPartitioned$test
                 if(is.null(testing))
@@ -225,7 +236,7 @@ shinyServer(function(input, output) {
                 pred <- predic()
                 if(is.null(pred))
                         return()
-                postResample(pred, testing[[y]])[1]
+                postResample(pred, testing[[y]])
         })
         
         output$plot1 <- renderPlotly({
@@ -235,25 +246,40 @@ shinyServer(function(input, output) {
                 test <- dataPartitioned$test
                 x1 <- input$x1
                 y <- input$outcome
-                
+                showLine <- input$showLine
+                showSmooth <- input$showSmooth
                 if(is.null(model))
                         return()
                 
+                withProgress(message = 'Updating the plot...', value = 0, {
                 pred <- data.frame(x = test[[x1]], y = predic(), label = "predicted values")
                 names(pred) <- c(x1, y, "label")
-                
                 test <- data.frame(test, label = "test set values")
+                incProgress(0.1)
                 
                 g <- ggplot(data = test, aes(x = test[[x1]], y = test[[y]])) +  
                         geom_point(aes(colour = test$label), size = 2, alpha = 0.6)
+                incProgress(0.1)
                 
                 g <- g + geom_point(aes(x = pred[1], y = pred[2], colour = pred$label), 
                                     size = 2, alpha = 0.4, inherit.aes = FALSE)
+                incProgress(0.1)
+                
+                if (showLine == TRUE) {
+                        g <- g + geom_line(aes(x = pred[1], y = pred[2]), size = 0.2, alpha = 1)
+                        incProgress(0.1)      
+                }
+                
+                if (showSmooth == TRUE) {
+                        g <- g + geom_smooth(aes(x = pred[1], y = pred[2]), size = 0.5)
+                        incProgress(0.1)
+                }
                 
                 g <- g + theme(axis.title = element_text(size = 10)) + 
                         labs(x = x1, y = y) + scale_color_manual(values=c("#468cc8", "red"), 
                                                                  name = "Legend (show/hide)")
-                
+                setProgress(1)
+                })
                 ggplotly(g, tooltip = c("x","y"))
         })   
         
@@ -305,8 +331,5 @@ shinyServer(function(input, output) {
                                 ))
                 }
         })
-        
-        
-        
         
 })
