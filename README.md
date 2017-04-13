@@ -12,7 +12,7 @@ For more information, see [this online presentation](https://cdromain.github.io/
 
 ## Credits
 
-- The *Prediction Playground* [Shiny](https://shiny.rstudio.com/) web application is powered and made possible by the [`caret`](https://topepo.github.io/caret/) package and its interface unifying different predictive algorithms. The interactive plot displayed in the app is powered by the [`plotly`](https://cran.r-project.org/web/packages/plotly/index.html) package and [graphing library](https://plot.ly/r/). Several other packages were used for data sets and predictive models (see the complete list in the [`server.R`](https://github.com/cdromain/DevDataProd_ProjectApp/blob/master/server.R) file.
+- The *Prediction Playground* [Shiny](https://shiny.rstudio.com/) web application is powered and made possible by the [`caret`](https://topepo.github.io/caret/) package and its interface unifying different predictive algorithms. The interactive plot displayed in the app is powered by the [`plotly`](https://cran.r-project.org/web/packages/plotly/index.html) package and [graphing library](https://plot.ly/r/). Several other packages were used for data sets and predictive models (see the complete list in the [`server.R`](https://github.com/cdromain/DevDataProd_ProjectApp/blob/master/server.R) file).
 
 - The *Prediction Playground* app was created for the *Developing Data Products* course project, part of the Johns Hopkins Data Science Specialization on [Coursera](http://coursera.org/), using RStudio version 1.0.136 (R version 3.3.3, OSX 10.11.6) in April 2017.
 

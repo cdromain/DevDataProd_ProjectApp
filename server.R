@@ -314,7 +314,7 @@ shinyServer(function(input, output) {
                                        hr(), 
                                        h6("6. Choose the prediction model"),
                                        helpText("The chosen model will be trained and then used", 
-                                                "for prediction. (C) means classification only",
+                                                "for prediction on the test set. (C) means classification only",
                                                 "and (R) regression only."),
                                        hr(),
                                        h6("7. Optionally set the seed to 1234"),
