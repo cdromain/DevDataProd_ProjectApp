@@ -34,8 +34,6 @@ shinyServer(function(input, output) {
                         url <- "https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/ToothGrowth.html"
                 if (input$dataset == "ChickWeight") 
                         url <- "https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/ChickWeight.html"
-                if (input$dataset == "esoph") 
-                        url <- "https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/esoph.html"
                 if (input$dataset == "faithful") 
                         url <- "https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/faithful.html"
                 if (input$dataset == "infert") 
